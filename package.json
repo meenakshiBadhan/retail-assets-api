@@ -5,13 +5,28 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --watch src/app.js"
+    "start": "node --watch src/app.js",
+    "migrate": "./node_modules/.bin/sequelize db:migrate",
+    "db:create": "./node_modules/.bin/sequelize db:create",
+    "db:drop": "./node_modules/.bin/sequelize db:drop",
+    "make:migration": "./node_modules/.bin/sequelize migration:generate --name",
+    "make:seeder": "./node_modules/.bin/sequelize seed:generate --name",
+    "migrate:undo": "./node_modules/.bin/sequelize db:migrate:undo",
+    "seed": "./node_modules/.bin/sequelize db:seed:all",
+    "seed:undo": "./node_modules/.bin/sequelize db:seed:undo"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "joi": "^18.0.2"
+    "joi": "^18.0.2",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.5"
   }
 }
