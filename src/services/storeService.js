@@ -25,6 +25,7 @@ async function fetchStore(query) {
         {
           model: ExpectedDevice,
           as: "expectedDevices",
+          required: false,
           attributes: {
             include: [
               [
@@ -42,6 +43,7 @@ async function fetchStore(query) {
             {
               model: DeviceType,
               as: "deviceType",
+              required: false,
               attributes: ["id", "name"],
             },
           ],
@@ -49,11 +51,14 @@ async function fetchStore(query) {
         {
           model: Device,
           as: "devices",
+          required: false,
           attributes: ["id", "serialNumber", "status"],
+          where: { status: "ASSIGNED" },
           include: [
             {
               model: DeviceType,
               as: "deviceType",
+              required: false,
               attributes: ["id", "name"],
             },
           ],
@@ -62,6 +67,17 @@ async function fetchStore(query) {
     });
   } catch (error) {
     throw new Error(`Error fetching stores: ${error.message}`);
+  }
+}
+
+// Update store
+async function updateStore(id, updateData) {
+  try {
+    await Store.update(updateData, {
+      where: { id },
+    });
+  } catch (error) {
+    throw new Error(`Error updating store: ${error.message}`);
   }
 }
 
@@ -94,4 +110,5 @@ module.exports = {
   fetchAllStores,
   fetchStore,
   fetchStoreCount,
+  updateStore,
 };

@@ -34,4 +34,15 @@ const ExpectedDevice = sequelize.define(
   { tableName: "expectedDevices" }
 );
 
+ExpectedDevice.associate = (models) => {
+  ExpectedDevice.belongsTo(models.Store, {
+    foreignKey: "storeId",
+    as: "store",
+  });
+  ExpectedDevice.belongsTo(models.DeviceType, {
+    foreignKey: "deviceTypeId",
+    as: "deviceType",
+  });
+};
+
 module.exports = ExpectedDevice;

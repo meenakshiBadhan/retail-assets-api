@@ -18,4 +18,15 @@ const DeviceType = sequelize.define(
   { tableName: "deviceTypes" }
 );
 
+DeviceType.associate = (models) => {
+  DeviceType.hasMany(models.ExpectedDevice, {
+    foreignKey: "deviceTypeId",
+    as: "expectedDevices",
+  });
+  DeviceType.hasMany(models.Device, {
+    foreignKey: "deviceTypeId",
+    as: "devices",
+  });
+};
+
 module.exports = DeviceType;

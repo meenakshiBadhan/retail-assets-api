@@ -1,5 +1,4 @@
 const storeService = require("../services/storeService");
-const expectedDeviceService = require("../services/expectedDeviceService");
 const { conflict } = require("../middlewares/errorHandlers");
 const { Op } = require("sequelize");
 const { pagination } = require("../utils/pagination");
@@ -7,7 +6,7 @@ const { pagination } = require("../utils/pagination");
 // Create a new store
 exports.createStore = async (req, res, next) => {
   try {
-    const { storeNumber, name, expectedDevices } = req.body;
+    const { storeNumber, name } = req.body;
 
     // Check for duplicate storeNumber or name
     const existingStore = await storeService.fetchStore({
@@ -29,22 +28,54 @@ exports.createStore = async (req, res, next) => {
     // Create the store if no duplicates
     const store = await storeService.createStore({ storeNumber, name });
 
-    // Create expected devices for the store
-    if (expectedDevices && Array.isArray(expectedDevices)) {
-      const expectedDevicePromises = expectedDevices.map(async (device) => {
-        const payload = {
-          storeId: store.id,
-          deviceTypeId: device.deviceTypeId,
-          expectedQuantity: device.expectedQuantity,
-        };
-        return await expectedDeviceService.createExpectedDevice(payload);
-      });
-      await Promise.all(expectedDevicePromises);
-    }
-
     res.json({
+      success: true,
       message: "Store created successfully",
       data: store,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update store details
+exports.updateStore = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { storeNumber, name } = req.body;
+
+    // Check if store exists
+    const store = await storeService.fetchStore({ id });
+    if (!store) {
+      return conflict(req, res, `Store with id ${id} not found`);
+    }
+
+    // Check for duplicate storeNumber or name (excluding current store)
+    const existingStore = await storeService.fetchStore({
+      [Op.and]: [
+        { [Op.or]: [{ storeNumber: storeNumber }, { name: name }] },
+        { id: { [Op.ne]: id } },
+      ],
+    });
+
+    // If duplicate found, return conflict response
+    if (existingStore) {
+      let errMsg = "";
+      if (existingStore.storeNumber === storeNumber) {
+        errMsg = `Store with storeNumber ${storeNumber} already exists`;
+      }
+      if (existingStore.name === name) {
+        errMsg = `Store with name ${name} already exists`;
+      }
+      return conflict(req, res, errMsg);
+    }
+
+    // Update store details
+    await storeService.updateStore(id, { storeNumber, name });
+
+    res.json({
+      success: true,
+      message: "Store updated successfully",
     });
   } catch (error) {
     next(error);
@@ -60,15 +91,14 @@ exports.listStores = async (req, res, next) => {
   limit = limit ? Number(limit) : Number(process.env.PER_PAGE_LIMIT);
 
   try {
+    // Fetch stores with pagination
     const stores = await storeService.fetchAllStores({}, page, limit);
-    if (stores && stores.length > 0) {
-      const totalCount = await storeService.fetchStoreCount();
-      let meta = pagination(page, totalCount, limit);
 
-      res.json({ stores, meta });
-    } else {
-      return conflict(req, res, "Stores not found");
-    }
+    // If stores found, return with meta info
+    const totalCount = await storeService.fetchStoreCount();
+    let meta = pagination(page, totalCount, limit);
+
+    res.json({ success: true, stores, meta });
   } catch (error) {
     next(error);
   }
@@ -87,6 +117,7 @@ exports.getStoreById = async (req, res) => {
 
   // Return store details
   res.json({
+    success: true,
     message: "Store fetched successfully",
     data: store,
   });
